@@ -1,0 +1,27 @@
+FROM aspnetapp as original
+
+
+ADD  https://raw.githubusercontent.com/thomasfricke/container-hardening/main/harden /harden
+
+WORKDIR /
+
+# we need root!
+USER 0
+
+RUN chmod +x /harden
+
+RUN /harden -d /app/aspnetapp /app/libcoreclr.so /lib/libssl.so.1.1 -f /app/*
+
+
+## bring everything together for release
+
+FROM scratch
+ENV TMPDIR /tmp
+WORKDIR /
+USER 101101
+
+COPY --from=original /tmp/harden/ .
+
+WORKDIR /app
+ENTRYPOINT ["./aspnetapp"]
+
